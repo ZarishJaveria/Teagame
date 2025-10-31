@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>☕ Chai Time Catcher</title>
+<style>
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: #f6e2b3 url('assets/background.jpg') center/cover no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 100vh;
+  overflow: hidden;
+  padding-bottom: 20px;
+}
+
+/* --- Splash Screen --- */
+#splashScreen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #f6a500, #8b4513);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  opacity: 1;
+  transition: opacity 1s ease-out;
+  overflow: hidden;
+}
+#splashTitle { font-size: 42px; font-weight: 700; text-shadow: 2px 2px #5b3a29; }
+#splashTagline { font-size: 20px; font-weight: 400; margin-top: 10px; color: #ffe8b3; }
+#splashCup { position: relative; margin-top: 30px; width: 100px; height: 100px; background: url('assets/chai-cup.png') center/contain no-repeat; }
+.steam { position: absolute; bottom: 100px; left: 50%; width: 20px; height: 40px; background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%); opacity: 0; border-radius: 50%; animation: rise 3s ease-in infinite; }
+.steam:nth-child(1){left:45%; animation-delay:0s;} .steam:nth-child(2){left:50%; animation-delay:1s;} .steam:nth-child(3){left:55%; animation-delay:2s;}
+@keyframes rise { 0%{transform:translateY(0)scale(0.8);opacity:0;} 30%{opacity:1;} 100%{transform:translateY(-100px)scale(1.4);opacity:0;} }
+
+/* --- Game Styles --- */
+#gameContainer { text-align:center; }
+h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight: 700; }
+
+#score { font-size: 22px; color: #4b2e1b; margin-bottom: 10px; }
+#heatContainer { width: 100%; height: 16px; background: rgba(150, 80, 40, 0.2); border-radius: 10px; border: 2px solid #8b4513; overflow: hidden; margin-bottom: 10px; }
+#heatBar { height: 100%; width: 0%; background: linear-gradient(90deg, #ffcc66, #ff9933, #ff6600); transition: width 0.3s linear; }
+
+#gameArea {
+  width: 400px; height: 80vh; max-height: 600px; min-height: 400px;
+  border: 3px solid #8b4513; border-radius: 15px;
+  background: rgba(255,244,229,0.85);
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 20px rgba(139,69,19,0.4);
+}
+
+#cup { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; background: url('assets/chai-cup.png') center/contain no-repeat; z-index:5; }
+.drop { position: absolute; width: 40px; height: 40px; background-size: contain; background-repeat: no-repeat; z-index:4; }
+
+/* --- Start & Game Over Menus --- */
+#startMenu, #gameOver {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh; /* Ensure it doesn’t overflow screen */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(248,228,194,0.95);
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  z-index: 10;
+}
+#startMenu input { width: 80%; padding: 8px; margin: 10px 0; font-size: 16px; border-radius: 8px; border: 1px solid #8b4513; text-align: center; }
+#startMenu button, #gameOver button { margin-top: 15px; padding: 10px 20px; font-size: 18px; background-color: #f6a500; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; }
+#startMenu button:hover, #gameOver button:hover { background-color: #ffb84d; }
+
+/* GameOver Leaderboard - Updated for wide screens */
+#gameOver .leaderboard-container {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 800px;       /* wider on desktops */
+  overflow-y: auto;
+  overflow-x: hidden;      /* no horizontal scrollbar */
+  margin: 20px 0;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+#leaderboard {
+  width: 100%;
+  text-align: left;
+  background: rgba(255, 244, 229, 0.95);
+  border: 2px solid #8b4513;
+  border-radius: 12px;
+  padding: 15px 20px;     /* slightly more padding for bigger width */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  font-family: 'Poppins', sans-serif;
+  box-sizing: border-box;
+}
+
+#leaderboard strong {
+  display: block;
+  font-size: 18px;
+  color: #5b3a29;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+#leaderboard div.entry {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s;
+  word-break: break-word; /* Wrap long names */
+}
+
+#leaderboard div.entry:hover { 
+  background: rgba(255, 230, 180, 0.9); 
+}
+
+@keyframes highlightEntry { 
+  0% { background-color: #fffa8c; } 
+  50% { background-color: rgba(255,255,255,0.7); } 
+  100% { background-color: rgba(255,255,255,0.7); } 
+}
+
+/* Buttons always visible */
+#gameOver .button-row {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  #leaderboard { max-width: 90%; font-size: 14px; padding: 8px 10px; }
+  #leaderboard div.entry { padding: 4px 6px; margin-bottom: 3px; font-size: 14px; }
+}
+
+/* Footer */
+footer { position: fixed; bottom: 5px; left: 5px; font-size: 12px; color: #5b3a29; background: rgba(255,255,255,0.7); padding: 5px 10px; border-radius: 8px; }
+
+@media (max-width: 768px) {
+  #splashTitle { font-size: 32px; }
+  #splashTagline { font-size: 16px; }
+  #splashCup { width: 80px; height: 80px; }
+  #gameArea { width: 90vw; height: 70vh; min-height: 350px; }
+  #cup { width: 50px; height: 50px; }
+  .drop { width: 30px; height: 30px; }
+  h1 { font-size: 24px; }
+  #startMenu, #gameOver { max-width: 300px; padding: 15px; }
+  #startMenu button, #gameOver button { font-size: 16px; padding: 8px 16px; }
+}
+
+@media (max-width: 480px) {
+  body { align-items: center; padding-bottom: 0; }
+  #splashTitle { font-size: 26px; }
+  #splashTagline { font-size: 14px; }
+  #gameContainer { width: 100%; padding: 0 5px; }
+  #gameArea { width: 95vw; height: 65vh; border-width: 2px; }
+  #cup { width: 45px; height: 45px; }
+  .drop { width: 25px; height: 25px; }
+  h1 { font-size: 20px; }
+  #score { font-size: 16px; }
+  #startMenu, #gameOver { width: 90%; max-width: 270px; font-size: 14px; }
+  #startMenu button, #gameOver button { font-size: 14px; padding: 8px 12px; }
+  footer { font-size: 10px; padding: 4px 6px; }
+}
+
+#gameOver button { width: 45%; margin: 5px 2.5%; box-sizing: border-box; }
+
+</style>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div id="splashScreen">
+  <div id="splashTitle">Chai Time Catcher</div>
+  <div id="splashTagline">Get ready to brew the perfect chai!</div>
+  <div id="splashCup">
+    <div class="steam"></div><div class="steam"></div><div class="steam"></div>
+  </div>
+</div>
+
+<div id="gameContainer">
+  <h1>Chai Time Catcher</h1>
+  <div id="score">Score: 0 | Lives: 3</div>
+  <div id="heatContainer"><div id="heatBar"></div></div>
+
+  <div id="gameArea">
+    <div id="cup"></div>
+
+    <!-- Start Menu -->
+    <div id="startMenu">
+      <h2>Enter Your Name</h2>
+      <input id="playerNameInput" type="text" autocomplete="off" placeholder="Your name..." />
+      <button id="playBtn">Play</button>
+    </div>
+
+    <!-- Game Over Menu -->
+    <div id="gameOver" style="display:none; flex-direction: column;">
+      <h2>Game Over!</h2>
+      <p id="finalScore"></p>
+      <p id="chaiRating"></p>
+      <div class="leaderboard-container">
+        <div id="leaderboard"></div>
+      </div>
+      <div class="button-row">
+        <button id="restartBtn">Play Again</button>
+        <button id="exitBtn">Exit</button>
+      </div>
+    </div>
+
+  </div> <!-- END #gameArea -->
+</div> <!-- END #gameContainer -->
+
+<!-- Thank You Overlay -->
+<div id="thankYouOverlay" style="
+    display: flex;
+    position: fixed;
+    inset: 0;
+    background: rgba(246, 226, 179, 0.95);
+    color: #5b3a29;
+    font-size: 32px;
+    font-weight: 700;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 50;
+    visibility: hidden;
+">Thanks for Playing! ☕</div>
+
+<footer>☕ Sounds & Stickers courtesy of <strong>SoundsForYou</strong> (Pixabay) & <strong>Attritube</strong>.</footer>
+
+<script>
+/* Splash */
+const splashScreen = document.getElementById('splashScreen');
+setTimeout(() => { splashScreen.style.opacity='0'; setTimeout(()=>splashScreen.style.display='none',1000); }, 2500);
+
+/* Game Elements */
+const gameContainer = document.getElementById('gameContainer');
+const gameArea = document.getElementById('gameArea');
+const cup = document.getElementById('cup');
+const scoreDisplay = document.getElementById('score');
+const startMenu = document.getElementById('startMenu');
+const playBtn = document.getElementById('playBtn');
+const gameOver = document.getElementById('gameOver');
+const finalScore = document.getElementById('finalScore');
+const chaiRating = document.getElementById('chaiRating');
+const restartBtn = document.getElementById('restartBtn');
+const exitBtn = document.getElementById('exitBtn');
+const heatBar = document.getElementById('heatBar');
+const leaderboardDiv = document.getElementById('leaderboard');
+const playerNameInput = document.getElementById('playerNameInput');
+const thankYouOverlay = document.getElementById('thankYouOverlay');
+
+let score=0, lives=3, cupX=170, gameRunning=false;
+let playerName="";
+const ingredients = [
+  { type:'biscuit', points:2, img:'assets/biscuit.png'},
+  { type:'cardamom', points:2, img:'assets/cardamom.png'},
+  { type:'ginger', points:2, img:'assets/ginger.png'},
+  { type:'fly', points:-1, img:'assets/fly.png'}
+];
+
+/* Web Audio catch/fail sounds */
+function playCatchSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "square";
+  o.frequency.setValueAtTime(800, ctx.currentTime);
+  g.gain.setValueAtTime(0.2, ctx.currentTime);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime + 0.1);
+}
+function playFailSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(200, ctx.currentTime);
+  g.gain.setValueAtTime(0.3, ctx.currentTime);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime + 0.3);
+}
+
+/* Cup movement */
+let leftPressed=false, rightPressed=false;
+document.addEventListener('keydown', e=>{
+  if(!gameRunning) return;
+  if(e.key==='ArrowLeft') leftPressed=true;
+  if(e.key==='ArrowRight') rightPressed=true;
+});
+document.addEventListener('keyup', e=>{
+  if(!gameRunning) return;
+  if(e.key==='ArrowLeft') leftPressed=false;
+  if(e.key==='ArrowRight') rightPressed=false;
+});
+setInterval(()=>{
+  if(!gameRunning) return;
+  if(leftPressed && cupX>0) cupX-=10;
+  if(rightPressed && cupX<gameArea.clientWidth-64) cupX+=10;
+  cup.style.left = cupX+'px';
+},30);
+
+/* Drops */
+function createDrop(){
+  if(!gameRunning) return;
+  const drop=document.createElement('div'); drop.classList.add('drop');
+  const item=ingredients[Math.floor(Math.random()*ingredients.length)];
+  drop.dataset.points=item.points; drop.style.backgroundImage=`url('${item.img}')`;
+  drop.style.left=Math.random()*(gameArea.clientWidth-40)+'px'; drop.style.top='0px';
+  gameArea.appendChild(drop);
+
+  const baseSpeed=4;
+  const interval=setInterval(()=>{
+    const fallSpeed=baseSpeed+Math.floor(score/20);
+    const dropTop=parseFloat(drop.style.top);
+    drop.style.top=(dropTop+fallSpeed)+'px';
+    const dropRect=drop.getBoundingClientRect();
+    const cupRect=cup.getBoundingClientRect();
+
+    if(dropRect.bottom>=cupRect.top-5 && dropRect.bottom<=cupRect.top+15 && dropRect.left<cupRect.right && dropRect.right>cupRect.left){
+      const pts=parseInt(drop.dataset.points);
+      score+=pts;
+      if(pts>0) playCatchSound();
+      else { playFailSound(); lives--; }
+      updateUI(); drop.remove(); clearInterval(interval);
+      if(lives<=0) endGame();
+    }
+    if(dropTop>gameArea.clientHeight){ drop.remove(); clearInterval(interval); }
+  },10);
+}
+setInterval(()=>{ if(!gameRunning) return; createDrop(); }, 800);
+
+/* UI Update */
+function updateUI(){
+  scoreDisplay.textContent=`Score: ${score} | Lives: ${lives}`;
+  heatBar.style.width=Math.min(score,100)+'%';
+}
+
+/* Start game */
+function startGame() {
+  playerName = playerNameInput.value.trim() || "Player";
+  startMenu.style.display='none';
+  gameRunning=true;
+}
+playBtn.addEventListener('click', startGame);
+playerNameInput.addEventListener('keydown', e=>{ if(e.key==='Enter') startGame(); });
+
+/* Touch movement */
+let touchActive = false;
+gameArea.addEventListener('touchstart', e=>{ if(!gameRunning) return; touchActive=true; moveCupToTouch(e.touches[0].clientX); });
+gameArea.addEventListener('touchmove', e=>{ if(!gameRunning||!touchActive) return; e.preventDefault(); moveCupToTouch(e.touches[0].clientX); });
+gameArea.addEventListener('touchend', ()=>{ touchActive=false; });
+function moveCupToTouch(touchX){
+  const rect=gameArea.getBoundingClientRect();
+  let x=touchX-rect.left-cup.offsetWidth/2;
+  x=Math.max(0, Math.min(x, gameArea.clientWidth-cup.offsetWidth));
+  cupX=x; cup.style.left=`${cupX}px`;
+}
+
+/* --- JSONBin Setup --- */
+const API_KEY = "$2a$10$npLs6be2DWKWjV8u3LskXe/ChVxjRtRJaajPj5eVRYiPTUE.ub.Dq"; 
+const BIN_ID = "69050bf4ae596e708f3adeac";
+
+async function getScores() {
+  const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { "X-Master-Key": API_KEY } });
+  const data = await res.json();
+  return data.record || [];
+}
+async function saveScores(scores) {
+  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, { method: "PUT", headers: { "Content-Type":"application/json","X-Master-Key": API_KEY }, body: JSON.stringify(scores) });
+}
+async function saveScore(name, score) {
+  let scores = await getScores();
+  scores.push({ name, score });
+  scores.sort((a,b)=>b.score-a.score);
+  scores = scores.slice(0,10);
+  await saveScores(scores);
+  return scores;
+}
+
+/* --- End Game --- */
+async function endGame() {
+  gameRunning = false;
+
+  finalScore.textContent = `Score: ${score}`;
+  if(score >= 50) chaiRating.textContent = "Chai Kadak! ☕🔥";
+  else if(score >= 30) chaiRating.textContent = "Chai Perfect! ☕😊";
+  else if(score >= 10) chaiRating.textContent = "Chai Thodi Patli… ☕😐";
+  else chaiRating.textContent = "Chai Watered Down… ☕💧";
+
+  gameOver.style.display = "flex";
+  leaderboardDiv.innerHTML = `<strong>Top 10 Players</strong><div>Loading scores...</div>`;
+  leaderboardDiv.style.display = "block";
+
+  const topScores = await saveScore(playerName, score);
+  let leaderboardHTML = topScores.map((s, i) =>
+    `<div class="entry"><span>${i+1}. ${s.name}</span><span>${s.score}</span></div>`
+  ).join("");
+  leaderboardDiv.innerHTML = `<strong>Top 10 Players</strong>` + leaderboardHTML;
+
+  const entries = leaderboardDiv.querySelectorAll('.entry');
+  if(entries.length) entries[0].style.animation = 'highlightEntry 1.5s ease-in-out';
+}
+
+/* Restart / Exit */
+restartBtn.addEventListener('click', () => {
+  score = 0; lives = 3; gameRunning = true;
+  gameOver.style.display = 'none';
+  leaderboardDiv.style.display = 'none';
+  scoreDisplay.textContent = `Score: ${score} | Lives: ${lives}`;
+  heatBar.style.width = '0%';
+  cupX = gameArea.clientWidth / 2 - cup.offsetWidth / 2;
+  cup.style.left = `${cupX}px`;
+  document.querySelectorAll('.drop').forEach(d => d.remove());
+});
+
+exitBtn.addEventListener('click', () => {
+  gameOver.style.display = 'none';
+  gameContainer.style.display = 'none';
+  leaderboardDiv.style.display = 'none';
+  thankYouOverlay.style.visibility = 'visible';
+});
+</script>
+</body>
+</html>
