@@ -12,10 +12,13 @@ body {
     background: #f6e2b3 url('assets/background.jpg') center/cover no-repeat;
     display: flex;
     justify-content: center;
-    align-items: flex-end; /* Keeps content near the bottom */
+    /* FIX: Use center alignment for vertical positioning and control spacing with padding */
+    align-items: center; 
     height: 100vh;
     overflow: hidden;
-    padding-bottom: 0; 
+    padding-top: 15px; 
+    padding-bottom: 15px; /* Add some padding at the top/bottom */
+    box-sizing: border-box; /* Crucial for controlling height */
 }
 #splashScreen { position: fixed; inset: 0; background: linear-gradient(180deg, #f6a500, #8b4513); color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; opacity: 1; transition: opacity 1s ease-out; }
 #splashTitle { font-size: 42px; font-weight: 700; text-shadow: 2px 2px #5b3a29; }
@@ -33,10 +36,10 @@ body {
     align-items: center; 
     width: 100%;
     max-width: 450px;
-    height: auto;
+    height: 100%; /* FIX: Take full height of the parent (body) */
     padding: 0 5px; 
     box-sizing: border-box;
-    margin-bottom: 10px; 
+    /* REMOVED margin-bottom: 10px; from here */
     position: relative; 
 }
 h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight: 700; }
@@ -46,13 +49,38 @@ h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight:
 
 /* --- Game Area --- */
 #gameArea { 
-    width: 90vw; max-width: 450px; height: 65vh; max-height: 600px; min-height: 400px; 
+    width: 90vw; max-width: 450px; 
+    /* FIX: Use calc() to subtract space for the header, score, and heat bar */
+    height: calc(100% - 130px); 
+    max-height: 600px; min-height: 300px; 
     border: 3px solid #8b4513; border-radius: 15px; background: rgba(255,244,229,0.85); 
     position: relative; overflow: hidden; box-shadow: 0 0 20px rgba(139,69,19,0.4); 
     display: flex; flex-direction: column;
 }
 #cup { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; background: url('assets/chai-cup.png') center/contain no-repeat; z-index:5; }
 .drop { position: absolute; width: 40px; height: 40px; background-size: contain; background-repeat: no-repeat; z-index:4; }
+
+/* ------------------------------------------------ */
+/* 👇 Score Feedback Animation CSS 👇 */
+/* ------------------------------------------------ */
+@keyframes score-feedback {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+}
+.score-feedback {
+    position: absolute;
+    font-weight: 800;
+    font-size: 24px;
+    pointer-events: none; 
+    text-shadow: 1px 1px #fff;
+    animation: score-feedback 0.8s ease-out forwards;
+    z-index: 10;
+}
+.positive-score { color: #008000; } 
+.negative-score { color: #cc0000; } 
+/* ------------------------------------------------ */
+/* 👆 End Score Feedback Animation CSS 👆 */
+/* ------------------------------------------------ */
 
 /* --- Start Menu (Remains contained in Game Area) --- */
 #startMenu { 
@@ -202,7 +230,13 @@ footer { position: fixed; bottom: 5px; left: 5px; font-size: 12px; color: #5b3a2
 /* --- Mobile Specific Media Queries (<= 600px) --- */
 /* ---------------------------------------------------- */
 @media (max-width: 600px) {
-    #gameArea { width: 95vw; height: 70vh; min-height: 300px; margin-top: 10px; }
+    /* Adjusted gameArea height for better fit on mobile */
+    #gameArea { 
+        width: 95vw; 
+        height: calc(100% - 130px); /* Use calc to ensure space above */
+        min-height: 300px; 
+        margin-top: 0; 
+    }
     h1 { font-size: 20px; } 
     #score { font-size: 18px; } 
     #gameOver { padding: 10px; }
@@ -239,6 +273,7 @@ footer { position: fixed; bottom: 5px; left: 5px; font-size: 12px; color: #5b3a2
     #gameOver h2 { font-size: 20px; }
     #finalScore, #chaiRating { font-size: 14px; }
     #gameOver button { font-size: 14px; padding: 6px 10px; }
+    .score-feedback { font-size: 18px; }
 }
 
 /* --- Landscape Phones (Short Screen Height) --- */
@@ -348,6 +383,29 @@ function playFailSound(){
     const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.type="sawtooth"; o.frequency.setValueAtTime(200, ctx.currentTime); g.gain.setValueAtTime(0.3, ctx.currentTime); o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.3);
 }
 
+// --- Score Feedback Function ---
+function showScoreFeedback(points, dropElement) {
+    const feedback = document.createElement('div');
+    feedback.textContent = (points > 0 ? '+' : '') + points;
+    feedback.classList.add('score-feedback', points > 0 ? 'positive-score' : 'negative-score');
+    
+    // Calculate position relative to the game area, centered above the cup
+    const dropRect = dropElement.getBoundingClientRect();
+    const gameAreaRect = gameArea.getBoundingClientRect();
+    const x = dropRect.left - gameAreaRect.left + dropRect.width / 2 - 15; // Centered roughly
+    const y = dropRect.top - gameAreaRect.top;
+    
+    feedback.style.left = `${x}px`;
+    feedback.style.top = `${y}px`; 
+    
+    gameArea.appendChild(feedback);
+
+    // Remove the element after the animation finishes
+    setTimeout(() => {
+        feedback.remove();
+    }, 800);
+}
+
 // --- Sound Toggle Logic ---
 soundSwitch.addEventListener('change', () => {
     soundEnabled = soundSwitch.checked; 
@@ -382,7 +440,12 @@ function createDrop(){
         const cupRect=cup.getBoundingClientRect();
         if(dropRect.bottom>=cupRect.top-5 && dropRect.bottom<=cupRect.top+15 && dropRect.left<cupRect.right && dropRect.right>cupRect.left){
             const pts=parseInt(drop.dataset.points);
-            score+=pts; pts>0?playCatchSound(): (playFailSound(), lives--);
+            score+=pts; 
+            pts>0?playCatchSound(): (playFailSound(), lives--);
+            
+            // Call the new feedback function right before removing the drop
+            showScoreFeedback(pts, drop);
+
             updateUI(); drop.remove(); clearInterval(interval);
             if(lives<=0) endGame();
         }
