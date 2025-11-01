@@ -6,19 +6,26 @@
 <title>☕ Chai-N-Catch</title>
 <style>
 /* --- Global & Desktop Base Styles --- */
+/* FALLBACK: Define the custom variable for 1% of the viewport height */
+:root {
+    --vh: 1vh; 
+}
+
 body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
     background: #f6e2b3 url('assets/background.jpg') center/cover no-repeat;
     display: flex;
     justify-content: center;
-    /* FIX: Use center alignment for vertical positioning and control spacing with padding */
     align-items: center; 
-    height: 100vh;
+    /* FIX: Use calc to set height based on the JS-calculated --vh variable */
+    height: calc(var(--vh, 1vh) * 100); 
+    /* Fallback for modern browsers */
+    height: 100dvh; 
     overflow: hidden;
     padding-top: 15px; 
-    padding-bottom: 15px; /* Add some padding at the top/bottom */
-    box-sizing: border-box; /* Crucial for controlling height */
+    padding-bottom: 15px; 
+    box-sizing: border-box; 
 }
 #splashScreen { position: fixed; inset: 0; background: linear-gradient(180deg, #f6a500, #8b4513); color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; opacity: 1; transition: opacity 1s ease-out; }
 #splashTitle { font-size: 42px; font-weight: 700; text-shadow: 2px 2px #5b3a29; }
@@ -36,10 +43,9 @@ body {
     align-items: center; 
     width: 100%;
     max-width: 450px;
-    height: 100%; /* FIX: Take full height of the parent (body) */
+    height: 100%; 
     padding: 0 5px; 
     box-sizing: border-box;
-    /* REMOVED margin-bottom: 10px; from here */
     position: relative; 
 }
 h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight: 700; }
@@ -50,7 +56,6 @@ h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight:
 /* --- Game Area --- */
 #gameArea { 
     width: 90vw; max-width: 450px; 
-    /* FIX: Use calc() to subtract space for the header, score, and heat bar */
     height: calc(100% - 130px); 
     max-height: 600px; min-height: 300px; 
     border: 3px solid #8b4513; border-radius: 15px; background: rgba(255,244,229,0.85); 
@@ -60,9 +65,7 @@ h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight:
 #cup { position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; background: url('assets/chai-cup.png') center/contain no-repeat; z-index:5; }
 .drop { position: absolute; width: 40px; height: 40px; background-size: contain; background-repeat: no-repeat; z-index:4; }
 
-/* ------------------------------------------------ */
-/* 👇 Score Feedback Animation CSS 👇 */
-/* ------------------------------------------------ */
+/* --- Score Feedback Animation CSS --- */
 @keyframes score-feedback {
     0% { transform: translateY(0) scale(1); opacity: 1; }
     100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
@@ -78,9 +81,7 @@ h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight:
 }
 .positive-score { color: #008000; } 
 .negative-score { color: #cc0000; } 
-/* ------------------------------------------------ */
-/* 👆 End Score Feedback Animation CSS 👆 */
-/* ------------------------------------------------ */
+/* --- End Score Feedback Animation CSS --- */
 
 /* --- Start Menu (Remains contained in Game Area) --- */
 #startMenu { 
@@ -150,45 +151,19 @@ h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight:
     font-weight: 600 !important; color: #9e6d4c; background: rgba(150, 80, 40, 0.1) !important;
 }
 
-/* ------------------------------------------------ */
-/* Game Over Button Styles (Primary/Secondary Action) */
-/* ------------------------------------------------ */
-#gameOver .button-row { 
-    flex-shrink: 0; display: flex; justify-content: center; 
-    margin-top: 20px; margin-bottom: 20px; width: 100%;
-}
+/* Game Over Button Styles */
+#gameOver .button-row { flex-shrink: 0; display: flex; justify-content: center; margin-top: 20px; margin-bottom: 20px; width: 100%; }
 #gameOver .button-row button { 
-    width: 150px; max-width: 45%; margin: 0 10px; 
-    padding: 10px 15px; font-weight: 700;
-    border: 2px solid #5b3a29; border-radius: 10px;
-    transition: transform 0.1s, box-shadow 0.1s;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
-    box-shadow: 0 4px 0 #5b3a29; 
-    transform: translateY(0);
-    width: 150px; 
+    width: 150px; max-width: 45%; margin: 0 10px; padding: 10px 15px; font-weight: 700;
+    border: 2px solid #5b3a29; border-radius: 10px; transition: transform 0.1s, box-shadow 0.1s;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3); box-shadow: 0 4px 0 #5b3a29; transform: translateY(0);
 }
-#gameOver .button-row button:active {
-    box-shadow: 0 1px 0 #5b3a29;
-    transform: translateY(3px); 
-}
-
-/* Specific Style for Play Again (Primary Action) */
-#restartBtn {
-    background-color: #f6a500; 
-    color: #fff;
-}
-
-/* Specific Style for Exit (Secondary Action) */
-#exitBtn {
-    background-color: #8b4513; 
-    color: #fff;
-}
-
+#gameOver .button-row button:active { box-shadow: 0 1px 0 #5b3a29; transform: translateY(3px); }
+#restartBtn { background-color: #f6a500; color: #fff; }
+#exitBtn { background-color: #8b4513; color: #fff; }
 #restartBtn:hover { background-color: #ffb84d; }
 #exitBtn:hover { background-color: #a8653a; }
-/* ------------------------------------------------ */
 /* End Game Over Button Styles */
-/* ------------------------------------------------ */
 
 /* --- Toggle Switch Styling --- */
 #soundToggle { position: absolute; top: 0px; right: 5px; display: flex; align-items: center; font-size: 14px; z-index: 15; padding: 5px; cursor: pointer; user-select: none; }
@@ -199,9 +174,7 @@ h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight:
 #soundSwitch:checked + .switch::before { transform: translateX(20px); }
 #soundToggle .label-text { font-weight: 600; color: #5b3a29; }
 
-/* ------------------------------------------------ */
-/* Thank You Overlay with Animation */
-/* ------------------------------------------------ */
+/* --- Thank You Overlay with Animation --- */
 #thankYouOverlay {
     position: fixed; inset: 0; background: rgba(246, 226, 179, 0.98); 
     color: #5b3a29; font-size: 32px; font-weight: 700; 
@@ -220,9 +193,7 @@ h1 { margin-bottom: 8px; color: #5b3a29; text-shadow: 1px 1px #fff; font-weight:
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
-/* ------------------------------------------------ */
-/* End Thank You Overlay with Animation */
-/* ------------------------------------------------ */
+/* --- End Thank You Overlay with Animation --- */
 
 footer { position: fixed; bottom: 5px; left: 5px; font-size: 12px; color: #5b3a29; background: rgba(255,255,255,0.7); padding: 5px 10px; border-radius: 8px; z-index: 5; }
 
@@ -230,10 +201,9 @@ footer { position: fixed; bottom: 5px; left: 5px; font-size: 12px; color: #5b3a2
 /* --- Mobile Specific Media Queries (<= 600px) --- */
 /* ---------------------------------------------------- */
 @media (max-width: 600px) {
-    /* Adjusted gameArea height for better fit on mobile */
     #gameArea { 
         width: 95vw; 
-        height: calc(100% - 130px); /* Use calc to ensure space above */
+        height: calc(100% - 130px); 
         min-height: 300px; 
         margin-top: 0; 
     }
@@ -245,7 +215,6 @@ footer { position: fixed; bottom: 5px; left: 5px; font-size: 12px; color: #5b3a2
     #leaderboard div.entry { font-size: 14px; }
     .leaderboard-entry-rank-1 { font-size: 1em; }
     
-    /* Mobile button adjustments */
     #gameOver .button-row button { 
         width: 48%; margin: 0 2%; padding: 8px 10px; font-size: 14px;
         box-shadow: 0 3px 0 #5b3a29;
@@ -275,13 +244,6 @@ footer { position: fixed; bottom: 5px; left: 5px; font-size: 12px; color: #5b3a2
     #gameOver button { font-size: 14px; padding: 6px 10px; }
     .score-feedback { font-size: 18px; }
 }
-
-/* --- Landscape Phones (Short Screen Height) --- */
-@media (max-width: 600px) and (max-height: 450px) {
-    #gameOver { padding: 5px 10px; }
-    #gameOver .leaderboard-container { max-height: 50vh; margin: 5px auto; }
-}
-
 </style>
 </head>
 <body>
@@ -339,12 +301,33 @@ footer { position: fixed; bottom: 5px; left: 5px; font-size: 12px; color: #5b3a2
     Thanks for Playing! 
 </div>
 
-<footer>☕ Sounds & Stickers courtesy of <strong>SoundsForYou</strong> (Pixabay) & <strong>Attritube</strong>.</footer>
+<footer id="gameFooter">☕ Sounds & Stickers courtesy of <strong>SoundsForYou</strong> (Pixabay) & <strong>Attritube</strong>.</footer>
 
 <script>
+// --- Mobile Viewport Fix (The most robust solution) ---
+function setVh() {
+    // Get the viewport height and calculate 1% of it in pixels
+    let vh = window.innerHeight * 0.01;
+    // Set the value in the CSS custom property --vh on the root element
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+// Run once on load
+setVh();
+// Run on device resize (e.g., orientation change or browser bar hide/show)
+window.addEventListener('resize', setVh);
+
 // --- Game Setup ---
 const splashScreen = document.getElementById('splashScreen');
-setTimeout(()=>{ splashScreen.style.opacity='0'; setTimeout(()=>splashScreen.style.display='none',1000); },2500);
+const gameFooter = document.getElementById('gameFooter');
+
+setTimeout(()=>{ 
+    splashScreen.style.opacity='0'; 
+    setTimeout(()=>{
+        splashScreen.style.display='none';
+        // FIX: Hide footer after splash screen disappears
+        gameFooter.style.display = 'none'; 
+    },1000); 
+},2500);
 
 const gameArea = document.getElementById('gameArea');
 const cup = document.getElementById('cup');
@@ -362,6 +345,7 @@ const playerNameInput = document.getElementById('playerNameInput');
 const thankYouOverlay = document.getElementById('thankYouOverlay');
 const soundToggle = document.getElementById('soundToggle'); 
 const soundSwitch = document.getElementById('soundSwitch'); 
+const gameContainer = document.getElementById('gameContainer');
 
 let score=0, lives=3, cupX=170, gameRunning=false;
 let playerName="";
@@ -389,10 +373,9 @@ function showScoreFeedback(points, dropElement) {
     feedback.textContent = (points > 0 ? '+' : '') + points;
     feedback.classList.add('score-feedback', points > 0 ? 'positive-score' : 'negative-score');
     
-    // Calculate position relative to the game area, centered above the cup
     const dropRect = dropElement.getBoundingClientRect();
     const gameAreaRect = gameArea.getBoundingClientRect();
-    const x = dropRect.left - gameAreaRect.left + dropRect.width / 2 - 15; // Centered roughly
+    const x = dropRect.left - gameAreaRect.left + dropRect.width / 2 - 15;
     const y = dropRect.top - gameAreaRect.top;
     
     feedback.style.left = `${x}px`;
@@ -400,7 +383,6 @@ function showScoreFeedback(points, dropElement) {
     
     gameArea.appendChild(feedback);
 
-    // Remove the element after the animation finishes
     setTimeout(() => {
         feedback.remove();
     }, 800);
@@ -443,7 +425,6 @@ function createDrop(){
             score+=pts; 
             pts>0?playCatchSound(): (playFailSound(), lives--);
             
-            // Call the new feedback function right before removing the drop
             showScoreFeedback(pts, drop);
 
             updateUI(); drop.remove(); clearInterval(interval);
@@ -571,6 +552,8 @@ exitBtn.addEventListener('click', ()=>{
     gameContainer.style.display='none'; 
     thankYouOverlay.style.display='flex'; // Show the flex container
     thankYouOverlay.style.visibility='visible';
+    // Ensure footer remains hidden
+    gameFooter.style.display = 'none'; 
 });
 </script>
 </body>
