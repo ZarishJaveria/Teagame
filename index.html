@@ -358,16 +358,44 @@ const ingredients = [
 ];
 
 // --- Sounds ---
-function playCatchSound(){ 
-    if (!soundEnabled) return; 
-    const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.type="square"; o.frequency.setValueAtTime(800, ctx.currentTime); g.gain.setValueAtTime(0.2, ctx.currentTime); o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.1);
-}
-function playFailSound(){ 
-    if (!soundEnabled) return; 
-    const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(); const g=ctx.createGain(); o.type="sawtooth"; o.frequency.setValueAtTime(200, ctx.currentTime); g.gain.setValueAtTime(0.3, ctx.currentTime); o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.3);
+// --- Global AudioContext (one per page) ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// --- Play a short beep sound ---
+function playSound({ type = 'square', frequency = 440, duration = 0.1, volume = 0.2 }) {
+    if (!soundEnabled) return;
+
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration);
+
+    // Optional: cleanup after sound ends
+    oscillator.onended = () => {
+        oscillator.disconnect();
+        gainNode.disconnect();
+    };
 }
 
-// --- Score Feedback Function ---
+// --- Specific game sounds ---
+function playCatchSound() {
+    playSound({ type: 'square', frequency: 800, duration: 0.1, volume: 0.2 });
+}
+
+function playFailSound() {
+    playSound({ type: 'sawtooth', frequency: 200, duration: 0.3, volume: 0.3 });
+}
+
+    // --- Score Feedback Function ---
 function showScoreFeedback(points, dropElement) {
     const feedback = document.createElement('div');
     feedback.textContent = (points > 0 ? '+' : '') + points;
@@ -440,8 +468,17 @@ function updateUI(){ scoreDisplay.textContent=`Score: ${score} | Lives: ${lives}
 
 // --- Start Game ---
 function startGame(){ playerName=playerNameInput.value.trim()||"Player"; startMenu.style.display='none'; gameRunning=true; }
-playBtn.addEventListener('click', startGame);
-playerNameInput.addEventListener('keydown', e=>{ if(e.key==='Enter') startGame(); });
+playBtn.addEventListener('click', () => {
+    // Resume AudioContext in case it's suspended (mobile browsers require this)
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    startGame();
+});
+playerNameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        startGame();
+    }
+});
 
 // --- Touch Support ---
 let touchActive=false;
@@ -558,3 +595,4 @@ exitBtn.addEventListener('click', ()=>{
 </script>
 </body>
 </html>
+
